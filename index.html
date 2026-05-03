@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MedSafe Online - Medication Error Tracker</title>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -16,32 +16,36 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: var(--font); background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
         
-        /* Sidebar */
-        .sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); position: fixed; height: 100vh; padding: 1.5rem 0; z-index: 100; }
+        /* --- Sidebar & Navigation --- */
+        .sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); position: fixed; height: 100vh; padding: 1.5rem 0; z-index: 100; display: flex; flex-direction: column; }
         .sidebar-logo { padding: 0 1.5rem 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
         .nav-item { padding: 12px 1.5rem; cursor: pointer; transition: 0.2s; font-size: 14px; color: var(--text2); display: flex; align-items: center; gap: 10px; }
         .nav-item:hover { background: var(--bg); }
         .nav-item.active { background: var(--accent-light); color: var(--accent); border-left: 4px solid var(--accent); font-weight: 600; }
         
-        /* Main Content */
+        /* --- Main Content --- */
         .main { margin-left: 240px; flex: 1; padding: 2rem; max-width: 1200px; width: calc(100% - 240px); }
         .page { display: none; }
         .page.active { display: block; }
         
-        /* UI Components */
+        /* --- UI Components --- */
         .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .full { grid-column: 1 / -1; }
         label { font-size: 13px; font-weight: 600; color: var(--text2); }
-        input, select, textarea { padding: 11px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 14px; background: #fff; }
+        input, select, textarea { padding: 11px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 14px; background: #fff; width: 100%; }
         input:focus, select:focus { outline: none; border-color: var(--accent); }
         
-        .btn-primary { background: var(--accent); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: var(--font); transition: 0.2s; }
+        .btn-primary { background: var(--accent); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: var(--font); transition: 0.2s; width: 100%; }
         .btn-primary:hover { background: #14472f; }
-        .btn-sync { background: #fff; color: var(--accent); border: 1px solid var(--accent); padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-bottom: 1rem; font-weight: 500; font-family: var(--font); }
+        .btn-sync { background: #fff; color: var(--accent); border: 1px solid var(--accent); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; font-family: var(--font); }
         
-        /* Dashboard Metrics */
+        /* --- Layout Grids (For responsive) --- */
+        .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+        .grid-trend { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+        
+        /* --- Dashboard Metrics --- */
         .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem; }
         .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; }
         .metric-label { font-size: 12px; font-weight: 500; color: var(--text3); margin-bottom: 6px; }
@@ -49,28 +53,27 @@
         .metric-card.alert .metric-value { color: var(--accent2); }
         .dash-filter { display: flex; gap: 10px; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
 
-        /* Dashboard Top Drugs */
+        /* --- Dashboard Top Drugs --- */
         .top-drug-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .drug-name { font-size: 13px; color: var(--text); min-width: 140px; font-weight: 500; }
+        .drug-name { font-size: 13px; color: var(--text); min-width: 120px; font-weight: 500; }
         .drug-bar-wrap { flex: 1; background: var(--bg); border-radius: 99px; height: 8px; overflow: hidden; }
         .drug-bar { height: 8px; border-radius: 99px; background: var(--accent); }
         .drug-count { font-size: 12px; color: var(--text3); font-family: var(--mono); min-width: 24px; text-align: right; }
 
-        /* Table */
+        /* --- Table --- */
         .table-container { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; }
-        th { background: #fafafa; padding: 12px; text-align: left; border-bottom: 1px solid var(--border); color: var(--text2); font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; min-width: 800px; }
+        th { background: #fafafa; padding: 12px; text-align: left; border-bottom: 1px solid var(--border); color: var(--text2); font-weight: 600; white-space: nowrap; }
         td { padding: 12px; border-bottom: 1px solid var(--border); }
         .row-severe { background-color: #fff5f5 !important; color: #c84040; }
         .badge { padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: bold; font-family: var(--mono); }
+        .text-ellipsis { max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
         
-        /* Severity Buttons */
+        /* --- Severity Buttons --- */
         .sev-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
         .sev-btn { padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; text-align: left; font-size: 12px; background: #fff; transition: 0.2s; line-height: 1.4; color: var(--text2); }
-        .sev-btn:hover { border-color: var(--accent); color: var(--text); }
         .sev-btn strong { font-family: var(--mono); font-size: 14px; display: block; margin-bottom: 2px; color: var(--text); }
         
-        /* Colors for Selected Severity */
         .sev-btn.sel-A { background:#f0f7f2; border-color:#2d8a56; color:#1a5f3f; }
         .sev-btn.sel-B { background:#eef4fb; border-color:#3a82c8; color:#1a4f80; }
         .sev-btn.sel-C { background:#fef8ec; border-color:#d4a017; color:#8a6000; }
@@ -81,28 +84,65 @@
         .sev-btn.sel-H { background:#ede8f8; border-color:#8060d0; color:#4a2090; }
         .sev-btn.sel-I { background:#1a1916; border-color:#1a1916; color:#f5f4f0; }
 
-        .toast { position: fixed; bottom: 30px; right: 30px; background: #1a1916; color: white; padding: 14px 28px; border-radius: 10px; display: none; z-index: 1000; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #1a1916; color: white; padding: 12px 24px; border-radius: 10px; display: none; z-index: 1000; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); text-align: center; white-space: nowrap; }
+
+        /* =========================================
+           📱 MOBILE RESPONSIVE CSS (แก้ UI ทับกัน)
+           ========================================= */
+        @media (max-width: 768px) {
+            /* เปลี่ยน Sidebar เป็นเมนูด้านล่าง (Bottom Nav) */
+            .sidebar { 
+                width: 100%; height: 65px; bottom: 0; top: auto; flex-direction: row; 
+                justify-content: space-around; padding: 0; border-top: 1px solid var(--border); 
+                border-right: none; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); 
+            }
+            .sidebar-logo { display: none; } /* ซ่อนโลโก้บนมือถือ */
+            .nav-item { 
+                flex: 1; flex-direction: column; justify-content: center; padding: 5px 0; 
+                gap: 2px; font-size: 11px; text-align: center; border-left: none; 
+            }
+            .nav-item span { font-size: 20px; }
+            .nav-item.active { border-left: none; border-top: 3px solid var(--accent); background: transparent; }
+            
+            /* ขยายเนื้อหาหลักให้เต็มจอ */
+            .main { margin-left: 0; width: 100%; padding: 1rem; margin-bottom: 70px; }
+            
+            /* ปรับกริดให้เรียงลงมาเป็นชั้นๆ */
+            .form-grid, .grid-2-col, .grid-trend { grid-template-columns: 1fr; }
+            .metric-row { grid-template-columns: 1fr 1fr; } /* 2 กล่องต่อแถว */
+            .sev-grid { grid-template-columns: repeat(2, 1fr); }
+            
+            /* ปรับตัวกรอง Dashboard */
+            .dash-filter { flex-direction: column; align-items: flex-start; }
+            .dash-filter .form-group { width: 100%; }
+            
+            /* ปรับหัวข้อด้านบน */
+            .header-bar { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .btn-sync { width: 100%; text-align: center; }
+        }
     </style>
 </head>
 <body>
 
+<!-- แถบเมนู -->
 <div class="sidebar">
     <div class="sidebar-logo">
         <h2 style="font-size: 19px; color: var(--accent); letter-spacing: -0.5px;">MedSafe <span style="font-weight: 300;">Online</span></h2>
         <p style="font-size: 11px; color: var(--text2); margin-top: 4px;">💊 Medication Error Tracking</p>
     </div>
-    <div class="nav-item active" onclick="switchPage('form')"><span>✏️</span> บันทึก Error</div>
-    <div class="nav-item" onclick="switchPage('dashboard')"><span>📊</span> Dashboard</div>
-    <div class="nav-item" onclick="switchPage('records')"><span>📋</span> รายการข้อมูล</div>
+    <!-- ใส่ ID ให้แต่ละเมนู เพื่อให้ JS หาเจอเวลากดบนมือถือ -->
+    <div class="nav-item active" id="nav-form" onclick="switchPage('form')"><span>✏️</span> บันทึก</div>
+    <div class="nav-item" id="nav-dashboard" onclick="switchPage('dashboard')"><span>📊</span> วิเคราะห์</div>
+    <div class="nav-item" id="nav-records" onclick="switchPage('records')"><span>📋</span> ข้อมูล</div>
 </div>
 
 <div class="main">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <div class="header-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
         <h2 id="page-title" style="font-size: 20px;">บันทึกเหตุการณ์</h2>
         <button class="btn-sync" onclick="loadOnlineData()">🔄 Sync ข้อมูลล่าสุด</button>
     </div>
 
-    <!-- Page: Form -->
+    <!-- 1. Page: Form -->
     <div id="page-form" class="page active">
         <div class="card">
             <div class="form-grid">
@@ -163,85 +203,64 @@
                     <textarea id="f-detail" rows="4" placeholder="ระบุสิ่งที่เกิดขึ้น สาเหตุ และการแก้ไข..."></textarea>
                 </div>
             </div>
-            <button class="btn-primary" style="margin-top: 2rem; width: 100%;" onclick="submitForm()">บันทึกข้อมูลเข้า Google Drive</button>
+            <button class="btn-primary" style="margin-top: 1.5rem;" onclick="submitForm()">บันทึกข้อมูลเข้า Google Drive</button>
         </div>
     </div>
 
-    <!-- Page: Dashboard -->
+    <!-- 2. Page: Dashboard -->
     <div id="page-dashboard" class="page">
-        
         <div class="dash-filter">
-            <div class="form-group" style="width: 200px;">
+            <div class="form-group">
                 <label>ปีงบประมาณ</label>
                 <select id="df-fy" onchange="renderDashboard()"></select>
             </div>
-            <div class="form-group" style="width: 200px;">
+            <div class="form-group">
                 <label>เดือน</label>
                 <select id="df-month" onchange="renderDashboard()">
                     <option value="">-- ทุกเดือน --</option>
-                    <option value="10">ตุลาคม</option>
-                    <option value="11">พฤศจิกายน</option>
-                    <option value="12">ธันวาคม</option>
-                    <option value="1">มกราคม</option>
-                    <option value="2">กุมภาพันธ์</option>
-                    <option value="3">มีนาคม</option>
-                    <option value="4">เมษายน</option>
-                    <option value="5">พฤษภาคม</option>
-                    <option value="6">มิถุนายน</option>
-                    <option value="7">กรกฎาคม</option>
-                    <option value="8">สิงหาคม</option>
-                    <option value="9">กันยายน</option>
+                    <option value="10">ตุลาคม</option><option value="11">พฤศจิกายน</option>
+                    <option value="12">ธันวาคม</option><option value="1">มกราคม</option>
+                    <option value="2">กุมภาพันธ์</option><option value="3">มีนาคม</option>
+                    <option value="4">เมษายน</option><option value="5">พฤษภาคม</option>
+                    <option value="6">มิถุนายน</option><option value="7">กรกฎาคม</option>
+                    <option value="8">สิงหาคม</option><option value="9">กันยายน</option>
                 </select>
             </div>
         </div>
 
         <div class="metric-row">
-            <div class="metric-card">
-                <div class="metric-label">จำนวน Error ทั้งหมด</div>
-                <div class="metric-value" id="m-total">0</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">เดือนปัจจุบัน</div>
-                <div class="metric-value" id="m-month">0</div>
-            </div>
-            <div class="metric-card alert">
-                <div class="metric-label">ความรุนแรง >= E</div>
-                <div class="metric-value" id="m-severe">0</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Ward ที่พบสูงสุด</div>
-                <div class="metric-value" id="m-ward" style="font-size:18px;">-</div>
-            </div>
+            <div class="metric-card"><div class="metric-label">Error ทั้งหมด</div><div class="metric-value" id="m-total">0</div></div>
+            <div class="metric-card"><div class="metric-label">เดือนปัจจุบัน</div><div class="metric-value" id="m-month">0</div></div>
+            <div class="metric-card alert"><div class="metric-label">ความรุนแรง >= E</div><div class="metric-value" id="m-severe">0</div></div>
+            <div class="metric-card"><div class="metric-label">Ward สูงสุด</div><div class="metric-value" id="m-ward" style="font-size:16px;">-</div></div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div class="grid-2-col">
             <div class="card">
                 <h4 style="font-size: 14px; margin-bottom: 1rem; color: var(--text2);">ประเภท Error</h4>
                 <div style="height: 250px; position: relative;"><canvas id="chart-type"></canvas></div>
             </div>
             <div class="card">
-                <h4 style="font-size: 14px; margin-bottom: 1rem; color: var(--text2);">จำนวนระดับความรุนแรง A-I</h4>
+                <h4 style="font-size: 14px; margin-bottom: 1rem; color: var(--text2);">ระดับความรุนแรง A-I</h4>
                 <div style="height: 250px; position: relative;"><canvas id="chart-sev"></canvas></div>
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+        <div class="grid-trend">
             <div class="card">
-                <h4 style="font-size: 14px; margin-bottom: 1rem; color: var(--text2);">จำนวน Error รายเดือน (ในปีงบประมาณ)</h4>
+                <h4 style="font-size: 14px; margin-bottom: 1rem; color: var(--text2);">แนวโน้มรายเดือน (ในปีงบประมาณ)</h4>
                 <div style="height: 250px; position: relative;"><canvas id="chart-trend"></canvas></div>
             </div>
             <div class="card">
                 <h4 style="font-size: 14px; margin-bottom: 1rem; color: var(--text2);">Top 5 ยาที่เกิด Error บ่อย</h4>
-                <div id="top-drugs-list" style="margin-top: 1rem;">
-                    <!-- แสดงรายการยาผ่าน JS -->
-                </div>
+                <div id="top-drugs-list" style="margin-top: 1rem;"></div>
             </div>
         </div>
     </div>
 
-    <!-- Page: Records -->
+    <!-- 3. Page: Records -->
     <div id="page-records" class="page">
-        <div class="card">
+        <div class="card" style="padding: 1rem;">
             <div class="table-container">
                 <table id="data-table">
                     <thead>
@@ -252,6 +271,7 @@
                             <th>ยา</th>
                             <th>ประเภท</th>
                             <th style="text-align: center;">ระดับ</th>
+                            <th>รายละเอียด</th> <!-- เพิ่มคอลัมน์รายละเอียด -->
                         </tr>
                     </thead>
                     <tbody id="records-body"></tbody>
@@ -264,7 +284,6 @@
 <div id="toast" class="toast"></div>
 
 <script>
-    // URL Backend Google Apps Script ที่คุณให้มา
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzjGUHXt2NLSiL9q7u4THA9NLsNRgFoB73Nu6glaG09qUOGCyxCHT2IW3lMwNm1kZAZwg/exec';
     
     let records = [];
@@ -272,32 +291,35 @@
     const TH_MONTHS = ['ต.ค.', 'พ.ย.', 'ธ.ค.', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.'];
     const FY_ORDER = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
+    // แก้ไขระบบเปลี่ยนหน้าให้รองรับมือถือชัวร์ๆ
     function switchPage(p) {
+        // ซ่อนทุกหน้า และเอาแถบสีออก
         document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        
+        // แสดงหน้าที่เลือก และใส่สีให้เมนู
         document.getElementById('page-' + p).classList.add('active');
-        event.currentTarget.classList.add('active');
+        document.getElementById('nav-' + p).classList.add('active');
         
         const titles = { 'form': 'บันทึกเหตุการณ์', 'dashboard': 'Dashboard วิเคราะห์ข้อมูล', 'records': 'รายการข้อมูลทั้งหมด' };
         document.getElementById('page-title').innerText = titles[p];
 
         if(p === 'dashboard') renderDashboard();
         if(p === 'records') renderTable();
+        
+        // เลื่อนจอขึ้นไปบนสุดเวลาเปลี่ยนหน้าบนมือถือ
+        window.scrollTo(0, 0);
     }
 
     function getFY(dateStr) {
         if(!dateStr) return null;
         const d = new Date(dateStr);
-        const m = d.getMonth() + 1;
-        const y = d.getFullYear();
-        return m >= 10 ? y + 1 : y;
+        return d.getMonth() + 1 >= 10 ? d.getFullYear() + 1 : d.getFullYear();
     }
 
     function selectSev(btn, val) {
-        document.querySelectorAll('.sev-btn').forEach(x => {
-            x.className = 'sev-btn'; // ลบคลาสสีเก่าออกให้หมด
-        });
-        btn.classList.add('sel-' + val); // ใส่คลาสสีเฉพาะตัว
+        document.querySelectorAll('.sev-btn').forEach(x => x.className = 'sev-btn');
+        btn.classList.add('sel-' + val);
         document.getElementById('f-severity').value = val;
     }
 
@@ -311,7 +333,7 @@
             if(document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
             showToast('✅ ข้อมูลอัปเดตเป็นปัจจุบันแล้ว');
         } catch (e) {
-            showToast('❌ ไม่สามารถดึงข้อมูลได้ (โปรดตรวจสอบการเชื่อมต่อ)');
+            showToast('❌ ไม่สามารถดึงข้อมูลได้');
         }
     }
 
@@ -323,7 +345,7 @@
             type: document.getElementById('f-type').value,
             severity: document.getElementById('f-severity').value,
             hn: document.getElementById('f-hn').value.trim(),
-            detail: document.getElementById('f-detail').value
+            detail: document.getElementById('f-detail').value.trim()
         };
 
         if(!data.date || !data.ward || !data.drug || !data.type || !data.severity) {
@@ -334,22 +356,16 @@
         try {
             await fetch(SCRIPT_URL, { 
                 method: 'POST', 
-                // เพิ่ม headers ชุดนี้เข้าไปครับ
-                headers: {
-                    'Content-Type': 'text/plain;charset=utf-8'
-                },
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(data) 
             });
-            
             showToast('✅ บันทึกสำเร็จ!');
             resetForm();
-            // หน่วงเวลา 1 วินาทีให้ Google Sheets เซฟข้อมูลให้เสร็จก่อนดึงมาแสดงใหม่
-            setTimeout(loadOnlineData, 1000); 
-            
+            setTimeout(loadOnlineData, 1000);
         } catch (e) { 
-            console.error(e);
             showToast('❌ บันทึกล้มเหลว กรุณาลองใหม่'); 
         }
+    }
 
     function resetForm() {
         document.getElementById('f-ward').value = '';
@@ -365,10 +381,10 @@
     function renderTable() {
         const tbody = document.getElementById('records-body');
         if (records.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:#999;">ยังไม่มีข้อมูลในระบบ</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:2rem; color:#999;">ยังไม่มีข้อมูลในระบบ</td></tr>';
             return;
         }
-        // เรียงจากใหม่ไปเก่า
+        
         const sortedRecords = [...records].sort((a,b) => new Date(b.date) - new Date(a.date));
         
         tbody.innerHTML = sortedRecords.map(r => `
@@ -379,6 +395,8 @@
                 <td style="font-weight:500;">${r.drug}</td>
                 <td style="font-size:12px;">${r.type}</td>
                 <td style="text-align:center;"><span class="badge" style="background:#eee">${r.severity}</span></td>
+                <!-- คอลัมน์รายละเอียด ใส่ Tooltip ไว้เวลาชี้ และย่อคำถ้ายาวไป -->
+                <td><span class="text-ellipsis" title="${r.detail || '-'}">${r.detail || '-'}</span></td>
             </tr>
         `).join('');
     }
@@ -392,45 +410,55 @@
         const fy = parseInt(fySelect.value);
         const selectedMonth = document.getElementById('df-month').value;
         
-        // กรองตามปีงบและเดือน (ถ้าเลือกเดือน)
         const filtered = records.filter(r => {
             if (getFY(r.date) !== fy) return false;
             if (selectedMonth && new Date(r.date).getMonth() + 1 !== parseInt(selectedMonth)) return false;
             return true;
         });
 
-        // Metrics Calculation
+        // 1. Metrics
         document.getElementById('m-total').innerText = filtered.length;
-        
-        // เดือนปัจจุบัน (อิงตามเดือนปฏิทินของวันนี้)
         const currentMonthNum = new Date().getMonth() + 1;
-        const currentMonthData = records.filter(r => new Date(r.date).getMonth() + 1 === currentMonthNum && new Date(r.date).getFullYear() === new Date().getFullYear());
-        document.getElementById('m-month').innerText = currentMonthData.length;
-
-        // >= E
-        const severeCount = filtered.filter(r => ['E','F','G','H','I'].includes(r.severity)).length;
-        document.getElementById('m-severe').innerText = severeCount;
-
-        // Top Ward
+        document.getElementById('m-month').innerText = records.filter(r => new Date(r.date).getMonth() + 1 === currentMonthNum && new Date(r.date).getFullYear() === new Date().getFullYear()).length;
+        document.getElementById('m-severe').innerText = filtered.filter(r => ['E','F','G','H','I'].includes(r.severity)).length;
+        
         const wardMap = {};
         filtered.forEach(r => { if(r.ward) wardMap[r.ward] = (wardMap[r.ward] || 0) + 1; });
         const topWard = Object.entries(wardMap).sort((a,b) => b[1] - a[1])[0];
         document.getElementById('m-ward').innerText = topWard ? topWard[0] : '-';
 
-        // 1. กราฟประเภท Error
+        // 2. กราฟประเภท Error (ปรับให้มี จำนวน + เปอร์เซ็นต์)
         const typeMap = {};
         filtered.forEach(r => { if(r.type) typeMap[r.type] = (typeMap[r.type] || 0) + 1; });
         if(chartType) chartType.destroy();
         chartType = new Chart(document.getElementById('chart-type'), {
             type: 'doughnut',
             data: {
-                labels: Object.keys(typeMap).map(k => k.split(' ')[0]), // เอาเฉพาะตัวเลขและคำแรก
+                labels: Object.keys(typeMap).map(k => k.split(' ')[0]), 
                 datasets: [{ data: Object.values(typeMap), backgroundColor: ['#1a5f3f', '#3a82c8', '#d4a017', '#c8420a', '#6a50c8'] }]
             },
-            options: { maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+            options: { 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { position: 'bottom' },
+                    // ระบบตั้งค่า Tooltip ให้โชว์ %
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                let value = context.raw;
+                                // หาผลรวมทั้งหมดในกราฟนี้
+                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let percentage = Math.round((value / total) * 100);
+                                return ` ${label}: ${value} ราย (${percentage}%)`;
+                            }
+                        }
+                    }
+                } 
+            }
         });
 
-        // 2. กราฟความรุนแรง A-I
+        // 3. กราฟความรุนแรง A-I
         const sevMap = {};
         SEV_LIST.forEach(s => sevMap[s] = 0);
         filtered.forEach(r => { if(sevMap.hasOwnProperty(r.severity)) sevMap[r.severity]++; });
@@ -442,41 +470,27 @@
                 datasets: [{ 
                     label: 'จำนวน', 
                     data: Object.values(sevMap), 
-                    backgroundColor: SEV_LIST.map(s => ['E','F','G','H','I'].includes(s) ? '#c84040' : '#2d8a56')
+                    backgroundColor: SEV_LIST.map(s => ['E','F','G','H','I'].includes(s) ? '#c84040' : '#2d8a56'),
+                    borderRadius: 4
                 }]
             },
             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
         });
 
-        // 3. กราฟแนวโน้มรายเดือน (เฉพาะข้อมูลในปีงบประมาณที่เลือก)
-        const fyRecords = records.filter(r => getFY(r.date) === fy); // ไม่สน filter เดือน
-        const trendData = FY_ORDER.map(mo => {
-            return fyRecords.filter(r => new Date(r.date).getMonth() + 1 === mo).length;
-        });
-        
+        // 4. แนวโน้มรายเดือน
+        const fyRecords = records.filter(r => getFY(r.date) === fy);
+        const trendData = FY_ORDER.map(mo => fyRecords.filter(r => new Date(r.date).getMonth() + 1 === mo).length);
         if(chartTrend) chartTrend.destroy();
         chartTrend = new Chart(document.getElementById('chart-trend'), {
             type: 'line',
-            data: {
-                labels: TH_MONTHS,
-                datasets: [{
-                    label: 'จำนวน Error',
-                    data: trendData,
-                    borderColor: '#1a5f3f',
-                    backgroundColor: 'rgba(26,95,63,0.1)',
-                    fill: true,
-                    tension: 0.3,
-                    pointBackgroundColor: '#1a5f3f'
-                }]
-            },
+            data: { labels: TH_MONTHS, datasets: [{ data: trendData, borderColor: '#1a5f3f', backgroundColor: 'rgba(26,95,63,0.1)', fill: true, tension: 0.3, pointBackgroundColor: '#1a5f3f' }] },
             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
         });
 
-        // 4. Top 5 Drugs
+        // 5. Top 5 Drugs
         const drugMap = {};
         filtered.forEach(r => { if(r.drug) drugMap[r.drug] = (drugMap[r.drug] || 0) + 1; });
         const topDrugs = Object.entries(drugMap).sort((a,b) => b[1] - a[1]).slice(0, 5);
-        
         const topDrugsEl = document.getElementById('top-drugs-list');
         if (topDrugs.length === 0) {
             topDrugsEl.innerHTML = '<p style="color:var(--text3); font-size:13px;">ไม่มีข้อมูล</p>';
@@ -484,10 +498,8 @@
             const maxVal = topDrugs[0][1];
             topDrugsEl.innerHTML = topDrugs.map(([name, count]) => `
                 <div class="top-drug-row">
-                    <div class="drug-name" title="${name}" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width: 140px;">${name}</div>
-                    <div class="drug-bar-wrap">
-                        <div class="drug-bar" style="width: ${(count / maxVal) * 100}%"></div>
-                    </div>
+                    <div class="drug-name" title="${name}" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${name}</div>
+                    <div class="drug-bar-wrap"><div class="drug-bar" style="width: ${(count / maxVal) * 100}%"></div></div>
                     <div class="drug-count">${count}</div>
                 </div>
             `).join('');
@@ -498,7 +510,6 @@
         const fys = [...new Set(records.map(r => getFY(r.date)))].sort((a,b)=>b-a);
         const curFY = getFY(new Date().toISOString().split('T')[0]);
         if(!fys.includes(curFY)) fys.unshift(curFY);
-        
         document.getElementById('df-fy').innerHTML = fys.map(y => `<option value="${y}">ปีงบประมาณ ${y}</option>`).join('');
     }
 
@@ -508,7 +519,6 @@
         setTimeout(() => t.style.display = 'none', 3000);
     }
 
-    // เริ่มต้นการทำงาน
     document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
     loadOnlineData();
 </script>
