@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medication Error Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #f0efe9;
+  --border: #e0ddd4;
+  --border2: #ccc9bc;
+  --text: #1a1916;
+  --text2: #6b6860;
+  --text3: #9b9890;
+  --accent: #1a5f3f;
+  --accent-light: #e8f2ec;
+  --accent2: #c8420a;
+  --font: 'IBM Plex Sans Thai', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; }
+
+/* LAYOUT */
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 10; }
+.main { margin-left: 220px; flex: 1; padding: 2rem; max-width: 1100px; }
+
+/* SIDEBAR */
+.sidebar-logo { padding: 1.5rem 1.25rem 1rem; border-bottom: 1px solid var(--border); }
+.sidebar-logo .logo-mark { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+.sidebar-logo h1 { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.sidebar-nav { padding: 1rem 0; flex: 1; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 1.25rem; font-size: 14px; color: var(--text2); cursor: pointer; border-left: 2px solid transparent; transition: all 0.15s; user-select: none; }
+.nav-item:hover { color: var(--text); background: var(--surface2); }
+.nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-light); font-weight: 500; }
+.nav-icon { width: 18px; text-align: center; font-size: 15px; }
+.sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--border); font-size: 11px; color: var(--text3); font-family: var(--mono); }
+
+/* PAGE */
+.page { display: none; }
+.page.active { display: block; }
+.page-header { margin-bottom: 1.75rem; }
+.page-header h2 { font-size: 20px; font-weight: 600; color: var(--text); }
+.page-header p { font-size: 13px; color: var(--text2); margin-top: 3px; }
+
+/* CARDS */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; }
+.card-title { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* FORM */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group.full { grid-column: 1 / -1; }
+.form-group label { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; }
+.form-group input, .form-group select, .form-group textarea {
+  padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--radius);
+  font-size: 14px; font-family: var(--font); background: var(--bg); color: var(--text);
+  transition: border-color 0.15s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  outline: none; border-color: var(--accent); background: #fff;
+}
+.form-group textarea { resize: vertical; }
+
+/* SEVERITY GRID */
+.sev-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.sev-btn {
+  padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg); cursor: pointer; font-size: 12px; font-family: var(--font);
+  color: var(--text2); text-align: left; line-height: 1.4; transition: all 0.15s;
+}
+.sev-btn:hover { border-color: var(--border2); color: var(--text); }
+.sev-btn .sev-letter { font-family: var(--mono); font-weight: 500; font-size: 13px; display: block; margin-bottom: 1px; }
+.sev-btn.sel-A { background:#f0f7f2; border-color:#2d8a56; color:#1a5f3f; }
+.sev-btn.sel-B { background:#eef4fb; border-color:#3a82c8; color:#1a4f80; }
+.sev-btn.sel-C { background:#fef8ec; border-color:#d4a017; color:#8a6000; }
+.sev-btn.sel-D { background:#fef2eb; border-color:#d4621a; color:#8a3800; }
+.sev-btn.sel-E { background:#fdecea; border-color:#c84040; color:#8a1a1a; }
+.sev-btn.sel-F { background:#f9e8e8; border-color:#a03030; color:#6a1010; }
+.sev-btn.sel-G { background:#f0eefa; border-color:#6a50c8; color:#3a1a8a; }
+.sev-btn.sel-H { background:#ede8f8; border-color:#8060d0; color:#4a2090; }
+.sev-btn.sel-I { background:#1a1916; border-color:#1a1916; color:#f5f4f0; }
+
+/* SUBMIT */
+.btn-primary { padding: 10px 20px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); cursor: pointer; font-size: 14px; font-weight: 500; font-family: var(--font); transition: background 0.15s; }
+.btn-primary:hover { background: #14472f; }
+.btn-secondary { padding: 7px 14px; background: none; color: var(--text2); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; font-size: 13px; font-family: var(--font); transition: all 0.15s; }
+.btn-secondary:hover { background: var(--surface2); color: var(--text); }
+
+/* METRICS */
+.metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+.metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+.metric-label { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+.metric-value { font-size: 28px; font-weight: 600; color: var(--text); font-family: var(--mono); line-height: 1; }
+.metric-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+.metric-card.alert .metric-value { color: var(--accent2); }
+
+/* DASH FILTER */
+.dash-filter { display: flex; gap: 10px; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.dash-filter label { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; }
+.dash-filter select { padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: var(--font); background: var(--surface); color: var(--text); }
+
+/* CHARTS */
+.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 1.5rem; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text2); }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.top-drug-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.drug-name { font-size: 13px; color: var(--text); min-width: 150px; }
+.drug-bar-wrap { flex: 1; background: var(--surface2); border-radius: 99px; height: 7px; overflow: hidden; }
+.drug-bar { height: 7px; border-radius: 99px; background: var(--accent); }
+.drug-count { font-size: 12px; color: var(--text3); font-family: var(--mono); min-width: 24px; text-align: right; }
+
+/* TABLE */
+.filter-bar { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+.filter-bar input, .filter-bar select { padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: var(--font); background: var(--surface); color: var(--text); }
+.filter-bar input { width: 210px; }
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: 11px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 500; font-family: var(--mono); }
+.badge-A { background:#f0f7f2; color:#1a5f3f; }
+.badge-B { background:#eef4fb; color:#1a4f80; }
+.badge-C { background:#fef8ec; color:#8a6000; }
+.badge-D { background:#fef2eb; color:#8a3800; }
+.badge-E { background:#fdecea; color:#8a1a1a; }
+.badge-F { background:#f9e8e8; color:#6a1010; }
+.badge-G { background:#f0eefa; color:#3a1a8a; }
+.badge-H { background:#ede8f8; color:#4a2090; }
+.badge-I { background:#1a1916; color:#f5f4f0; }
+.no-data { text-align: center; padding: 3rem; color: var(--text3); font-size: 14px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 28px; right: 28px; background: var(--text); color: #fff; padding: 10px 18px; border-radius: var(--radius); font-size: 13px; opacity: 0; transition: opacity 0.25s; pointer-events: none; z-index: 999; font-family: var(--mono); }
+.toast.show { opacity: 1; }
+
+/* REQUIRED STAR */
+.req { color: var(--accent2); margin-left: 2px; }
+.section-divider { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; padding: 0.5rem 0 0.75rem; grid-column: 1 / -1; border-top: 1px solid var(--border); margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">MedSafe</div>
+      <h1>Medication Error Tracker</h1>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="switchPage('form')">
+        <span class="nav-icon">✏️</span> บันทึก Error
+      </div>
+      <div class="nav-item" onclick="switchPage('dashboard')">
+        <span class="nav-icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="switchPage('records')">
+        <span class="nav-icon">📋</span> รายการข้อมูล
+      </div>
+    </nav>
+    <div class="sidebar-footer">v1.0 · ข้อมูลเก็บใน browser</div>
+  </aside>
+
+  <main class="main">
+
+    <!-- FORM PAGE -->
+    <div id="page-form" class="page active">
+      <div class="page-header">
+        <h2>บันทึก Medication Error</h2>
+        <p>กรอกข้อมูลให้ครบถ้วน ช่องที่มี <span class="req">*</span> จำเป็นต้องกรอก</p>
+      </div>
+      <div class="card">
+        <div class="form-grid">
+          <div class="section-divider">ข้อมูลทั่วไป</div>
+          <div class="form-group">
+            <label>วันที่เกิดเหตุ <span class="req">*</span></label>
+            <input type="date" id="f-date">
+          </div>
+          <div class="form-group">
+            <label>Ward / หอผู้ป่วย <span class="req">*</span></label>
+            <select id="f-ward">
+              <option value="">— เลือก Ward —</option>
+              <option>อายุรกรรมชาย (ชั้น 3)</option>
+              <option>อายุรกรรมหญิง (ชั้น 4)</option>
+              <option>ICU</option>
+              <option>OPD</option>
+              <option>ปชร.ล่าง</option>
+              <option>ปชร.บน</option>
+              <option>VIP</option>
+              <option>ห้องคลอด</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>HN ผู้ป่วย</label>
+            <input type="text" id="f-hn" placeholder="เช่น 123456">
+          </div>
+          <div class="form-group">
+            <label>เพศผู้ป่วย</label>
+            <select id="f-gender">
+              <option value="">— เลือก —</option>
+              <option>ชาย</option>
+              <option>หญิง</option>
+            </select>
+          </div>
+
+          <div class="section-divider">ข้อมูล Error</div>
+          <div class="form-group">
+            <label>ชื่อยาที่เกิด Error <span class="req">*</span></label>
+            <input type="text" id="f-drug" placeholder="เช่น Warfarin 5 mg">
+          </div>
+          <div class="form-group">
+            <label>ประเภท Error <span class="req">*</span></label>
+            <select id="f-type">
+              <option value="">— เลือกประเภท —</option>
+              <option>1. Prescribing error</option>
+              <option>2. Transcribing error</option>
+              <option>3. Pre-dispensing error</option>
+              <option>4. Dispensing error</option>
+              <option>5. Administration error</option>
+            </select>
+          </div>
+
+          <div class="form-group full">
+            <label>ระดับความรุนแรง (NCC MERP Category A–I) <span class="req">*</span></label>
+            <div class="sev-grid" id="sev-grid">
+              <button class="sev-btn" onclick="selectSev(this,'A')"><span class="sev-letter">A</span>ไม่ถึงผู้ป่วย</button>
+              <button class="sev-btn" onclick="selectSev(this,'B')"><span class="sev-letter">B</span>ถึงผู้ป่วย ไม่เป็นอันตราย</button>
+              <button class="sev-btn" onclick="selectSev(this,'C')"><span class="sev-letter">C</span>ต้องติดตามเพิ่มเติม</button>
+              <button class="sev-btn" onclick="selectSev(this,'D')"><span class="sev-letter">D</span>ต้องแทรกแซง</button>
+              <button class="sev-btn" onclick="selectSev(this,'E')"><span class="sev-letter">E</span>เกิดอันตรายชั่วคราว</button>
+              <button class="sev-btn" onclick="selectSev(this,'F')"><span class="sev-letter">F</span>อันตราย / ต้องรักษาต่อ</button>
+              <button class="sev-btn" onclick="selectSev(this,'G')"><span class="sev-letter">G</span>อันตรายถาวร</button>
+              <button class="sev-btn" onclick="selectSev(this,'H')"><span class="sev-letter">H</span>เสี่ยงต่อชีวิต</button>
+              <button class="sev-btn" onclick="selectSev(this,'I')"><span class="sev-letter">I</span>เสียชีวิต</button>
+            </div>
+            <input type="hidden" id="f-severity">
+          </div>
+
+          <div class="form-group full">
+            <label>รายละเอียดเหตุการณ์</label>
+            <textarea id="f-detail" rows="4" placeholder="อธิบายสิ่งที่เกิดขึ้น สาเหตุ และการแก้ไข..."></textarea>
+          </div>
+        </div>
+        <div style="margin-top:1.25rem; display:flex; gap:10px;">
+          <button class="btn-primary" onclick="submitForm()">บันทึกข้อมูล</button>
+          <button class="btn-secondary" onclick="resetForm()">ล้างฟอร์ม</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+    <div id="page-dashboard" class="page">
+      <div class="page-header">
+        <h2>Dashboard</h2>
+        <p>ภาพรวมและการวิเคราะห์ข้อมูล medication error</p>
+      </div>
+
+      <div class="dash-filter">
+        <label>ปีงบประมาณ</label>
+        <select id="df-fy" onchange="renderDashboard()"></select>
+        <label style="margin-left:8px;">เดือน</label>
+        <select id="df-month" onchange="renderDashboard()">
+          <option value="">ทุกเดือน</option>
+          <option value="10">ตุลาคม</option><option value="11">พฤศจิกายน</option>
+          <option value="12">ธันวาคม</option><option value="1">มกราคม</option>
+          <option value="2">กุมภาพันธ์</option><option value="3">มีนาคม</option>
+          <option value="4">เมษายน</option><option value="5">พฤษภาคม</option>
+          <option value="6">มิถุนายน</option><option value="7">กรกฎาคม</option>
+          <option value="8">สิงหาคม</option><option value="9">กันยายน</option>
+        </select>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric-card">
+          <div class="metric-label">รายงานทั้งหมด</div>
+          <div class="metric-value" id="m-total">0</div>
+          <div class="metric-sub">กรณี (ช่วงที่เลือก)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">เดือนปัจจุบัน</div>
+          <div class="metric-value" id="m-month">0</div>
+          <div class="metric-sub">กรณี</div>
+        </div>
+        <div class="metric-card alert">
+          <div class="metric-label">ความรุนแรง ≥ E</div>
+          <div class="metric-value" id="m-severe">0</div>
+          <div class="metric-sub">กรณี</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Ward สูงสุด</div>
+          <div class="metric-value" id="m-ward" style="font-size:15px;line-height:1.3;">—</div>
+          <div class="metric-sub" id="m-ward-count"></div>
+        </div>
+      </div>
+
+      <div class="chart-row">
+        <div class="card">
+          <div class="card-title">ประเภท Error</div>
+          <div class="legend" id="legend-type"></div>
+          <div style="position:relative;height:220px;"><canvas id="chart-type" role="img" aria-label="ประเภท error">ข้อมูลประเภท error</canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">ระดับความรุนแรง A–I</div>
+          <div class="legend" id="legend-sev"></div>
+          <div style="position:relative;height:220px;"><canvas id="chart-sev" role="img" aria-label="ระดับความรุนแรง">ข้อมูลความรุนแรง</canvas></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-title">จำนวน Error รายเดือน — ปีงบประมาณที่เลือก</div>
+        <div style="position:relative;height:200px;"><canvas id="chart-trend" role="img" aria-label="แนวโน้มรายเดือน">ข้อมูลรายเดือน</canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Top 5 ยาที่เกิด Error บ่อย</div>
+        <div id="top-drugs"><p class="no-data" style="padding:1rem 0;">ยังไม่มีข้อมูล</p></div>
+      </div>
+    </div>
+
+    <!-- RECORDS PAGE -->
+    <div id="page-records" class="page">
+      <div class="page-header">
+        <h2>รายการข้อมูลทั้งหมด</h2>
+        <p>ค้นหา กรอง และ export ข้อมูล</p>
+      </div>
+      <div class="card">
+        <div class="filter-bar">
+          <input type="text" id="search-input" placeholder="ค้นหา HN / ยา / Ward..." oninput="renderTable()">
+          <select id="filter-type" onchange="renderTable()">
+            <option value="">ทุกประเภท</option>
+            <option>1. Prescribing error</option>
+            <option>2. Transcribing error</option>
+            <option>3. Pre-dispensing error</option>
+            <option>4. Dispensing error</option>
+            <option>5. Administration error</option>
+          </select>
+          <select id="filter-sev" onchange="renderTable()">
+            <option value="">ทุกระดับ</option>
+            <option>A</option><option>B</option><option>C</option><option>D</option>
+            <option>E</option><option>F</option><option>G</option><option>H</option><option>I</option>
+          </select>
+          <select id="filter-ward" onchange="renderTable()">
+            <option value="">ทุก Ward</option>
+            <option>อายุรกรรมชาย (ชั้น 3)</option>
+            <option>อายุรกรรมหญิง (ชั้น 4)</option>
+            <option>ICU</option><option>OPD</option>
+            <option>ปชร.ล่าง</option><option>ปชร.บน</option>
+            <option>VIP</option><option>ห้องคลอด</option>
+          </select>
+          <button class="btn-secondary" onclick="exportCSV()" style="margin-left:auto;">Export CSV ↓</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>วันที่</th><th>Ward</th><th>HN</th><th>เพศ</th>
+                <th>ยา</th><th>ประเภท Error</th><th>Severity</th>
+              </tr>
+            </thead>
+            <tbody id="records-body"></tbody>
+          </table>
+          <div id="no-data" class="no-data" style="display:none;">ไม่พบข้อมูล</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'medsafe_errors_v1';
+let records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+let chartType=null, chartSev=null, chartTrend=null;
+
+const WARDS = ['อายุรกรรมชาย (ชั้น 3)','อายุรกรรมหญิง (ชั้น 4)','ICU','OPD','ปชร.ล่าง','ปชร.บน','VIP','ห้องคลอด'];
+const SEV_LIST = ['A','B','C','D','E','F','G','H','I'];
+const SEV_COLORS = { A:'#2d8a56',B:'#3a82c8',C:'#d4a017',D:'#d4621a',E:'#c84040',F:'#a03030',G:'#6a50c8',H:'#8060d0',I:'#1a1916' };
+const TYPE_COLORS = ['#1a5f3f','#2d7ab5','#c8420a','#c8920a','#6a40c8'];
+const TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const FY_ORDER = [10,11,12,1,2,3,4,5,6,7,8,9];
+
+function getFY(dateStr) {
+  if(!dateStr) return null;
+  const d = new Date(dateStr), m = d.getMonth()+1, y = d.getFullYear();
+  return m >= 10 ? y+1 : y;
+}
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); } catch(e) {}
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+function switchPage(p) {
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav-item')[['form','dashboard','records'].indexOf(p)].classList.add('active');
+  if(p==='dashboard') { buildFYOptions(); renderDashboard(); }
+  if(p==='records') renderTable();
+}
+
+function selectSev(btn, val) {
+  document.querySelectorAll('.sev-btn').forEach(b=>{ b.className='sev-btn'; });
+  btn.classList.add('sel-'+val);
+  document.getElementById('f-severity').value = val;
+}
+
+function resetForm() {
+  ['f-ward','f-gender','f-type','f-detail','f-severity'].forEach(id=>document.getElementById(id).value='');
+  ['f-hn','f-drug'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  document.querySelectorAll('.sev-btn').forEach(b=>b.className='sev-btn');
+}
+
+function submitForm() {
+  const date=document.getElementById('f-date').value;
+  const ward=document.getElementById('f-ward').value;
+  const drug=document.getElementById('f-drug').value.trim();
+  const type=document.getElementById('f-type').value;
+  const sev=document.getElementById('f-severity').value;
+  if(!date||!ward||!drug||!type||!sev) { showToast('⚠ กรุณากรอกข้อมูลที่จำเป็นให้ครบ'); return; }
+  records.push({
+    id: Date.now(), date, ward,
+    hn: document.getElementById('f-hn').value.trim(),
+    gender: document.getElementById('f-gender').value,
+    drug, type, severity: sev,
+    detail: document.getElementById('f-detail').value
+  });
+  save();
+  showToast('✓ บันทึกข้อมูลเรียบร้อยแล้ว');
+  resetForm();
+}
+
+function buildFYOptions() {
+  const fys = [...new Set(records.map(r=>getFY(r.date)).filter(Boolean))].sort((a,b)=>b-a);
+  const now = new Date();
+  const curFY = (now.getMonth()+1)>=10 ? now.getFullYear()+1 : now.getFullYear();
+  if(!fys.includes(curFY)) fys.unshift(curFY);
+  const sel = document.getElementById('df-fy');
+  const prev = sel.value;
+  sel.innerHTML = fys.map(y=>`<option value="${y}">ปีงบ ${y} (${y-1}–${y})</option>`).join('');
+  if(prev && fys.includes(parseInt(prev))) sel.value = prev;
+}
+
+function getFiltered() {
+  const fy = parseInt(document.getElementById('df-fy').value);
+  const mo = document.getElementById('df-month').value;
+  return records.filter(r=>{
+    if(getFY(r.date)!==fy) return false;
+    if(mo && r.date && (new Date(r.date).getMonth()+1)!==parseInt(mo)) return false;
+    return true;
+  });
+}
+
+function renderDashboard() {
+  const f = getFiltered();
+  const now = new Date(), curMo = now.getMonth()+1;
+  document.getElementById('m-total').textContent = f.length;
+  document.getElementById('m-month').textContent = f.filter(r=>r.date&&(new Date(r.date).getMonth()+1)===curMo).length;
+  document.getElementById('m-severe').textContent = f.filter(r=>['E','F','G','H','I'].includes(r.severity)).length;
+  const wc={};
+  f.forEach(r=>{ if(r.ward) wc[r.ward]=(wc[r.ward]||0)+1; });
+  const tw=Object.entries(wc).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('m-ward').textContent = tw?tw[0]:'—';
+  document.getElementById('m-ward-count').textContent = tw?tw[1]+' กรณี':'';
+
+  // Type chart
+  const tc={};
+  f.forEach(r=>{ if(r.type) tc[r.type]=(tc[r.type]||0)+1; });
+  const tl=Object.keys(tc), td=tl.map(k=>tc[k]);
+  const tShort=tl.map(l=>l.replace(/^\d+\.\s*/,''));
+  document.getElementById('legend-type').innerHTML=tl.map((l,i)=>`<span class="legend-item"><span class="legend-dot" style="background:${TYPE_COLORS[i%5]}"></span>${l.replace(/^\d+\.\s*/,'')} (${td[i]})</span>`).join('');
+  if(chartType) chartType.destroy();
+  chartType=new Chart(document.getElementById('chart-type'),{
+    type:'doughnut',
+    data:{labels:tShort,datasets:[{data:td,backgroundColor:tl.map((_,i)=>TYPE_COLORS[i%5]),borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}
+  });
+
+  // Severity chart
+  const sc={};
+  SEV_LIST.forEach(s=>sc[s]=0);
+  f.forEach(r=>{ if(r.severity) sc[r.severity]++; });
+  document.getElementById('legend-sev').innerHTML=SEV_LIST.map(s=>`<span class="legend-item"><span class="legend-dot" style="background:${SEV_COLORS[s]}"></span>${s}: ${sc[s]}</span>`).join('');
+  if(chartSev) chartSev.destroy();
+  chartSev=new Chart(document.getElementById('chart-sev'),{
+    type:'bar',
+    data:{labels:SEV_LIST,datasets:[{data:SEV_LIST.map(s=>sc[s]),backgroundColor:SEV_LIST.map(s=>SEV_COLORS[s]),borderWidth:0,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{stepSize:1}}}}
+  });
+
+  // Trend chart
+  const fy=parseInt(document.getElementById('df-fy').value);
+  const mData=FY_ORDER.map(mo=>{
+    const yr=mo>=10?fy-1:fy;
+    const yStr=String(yr),mStr=String(mo).padStart(2,'0');
+    return records.filter(r=>r.date&&r.date.startsWith(yStr+'-'+mStr)).length;
+  });
+  if(chartTrend) chartTrend.destroy();
+  chartTrend=new Chart(document.getElementById('chart-trend'),{
+    type:'line',
+    data:{labels:FY_ORDER.map(m=>TH_MONTHS[m-1]),datasets:[{data:mData,borderColor:'#1a5f3f',backgroundColor:'rgba(26,95,63,0.07)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5f3f',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{autoSkip:false,maxRotation:0}},y:{beginAtZero:true,ticks:{stepSize:1}}}}
+  });
+
+  // Top drugs
+  const dc={};
+  f.forEach(r=>{ if(r.drug) dc[r.drug]=(dc[r.drug]||0)+1; });
+  const top=Object.entries(dc).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const mx=top[0]?top[0][1]:1;
+  const el=document.getElementById('top-drugs');
+  el.innerHTML=top.length?top.map(([n,c])=>`<div class="top-drug-row"><div class="drug-name">${n}</div><div class="drug-bar-wrap"><div class="drug-bar" style="width:${Math.round(c/mx*100)}%"></div></div><div class="drug-count">${c}</div></div>`).join(''):'<p class="no-data" style="padding:1rem 0;">ไม่มีข้อมูลในช่วงที่เลือก</p>';
+}
+
+function renderTable() {
+  const q=(document.getElementById('search-input').value||'').toLowerCase();
+  const ft=document.getElementById('filter-type').value;
+  const fs=document.getElementById('filter-sev').value;
+  const fw=document.getElementById('filter-ward').value;
+  const filtered=records.filter(r=>
+    (!q||(r.drug||'').toLowerCase().includes(q)||(r.ward||'').toLowerCase().includes(q)||(r.hn||'').toLowerCase().includes(q))&&
+    (!ft||r.type===ft)&&(!fs||r.severity===fs)&&(!fw||r.ward===fw)
+  ).sort((a,b)=>b.date.localeCompare(a.date));
+  const tbody=document.getElementById('records-body');
+  const noData=document.getElementById('no-data');
+  if(!filtered.length){ tbody.innerHTML=''; noData.style.display='block'; return; }
+  noData.style.display='none';
+  tbody.innerHTML=filtered.map(r=>`<tr>
+    <td>${r.date||'—'}</td>
+    <td>${r.ward||'—'}</td>
+    <td style="font-family:var(--mono);font-size:12px;">${r.hn||'—'}</td>
+    <td>${r.gender||'—'}</td>
+    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.drug||''}">${r.drug||'—'}</td>
+    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.type||''}">${r.type||'—'}</td>
+    <td><span class="badge badge-${r.severity}">${r.severity}</span></td>
+  </tr>`).join('');
+}
+
+function exportCSV() {
+  if(!records.length){ showToast('ไม่มีข้อมูลสำหรับ Export'); return; }
+  const h=['วันที่','Ward','HN','เพศ','ยา','ประเภท Error','Severity','รายละเอียด'];
+  const rows=records.map(r=>[r.date,r.ward,r.hn,r.gender,r.drug,r.type,r.severity,(r.detail||'').replace(/[\n,]/g,' ')].map(v=>`"${v||''}"`).join(','));
+  const csv=[h.join(','),...rows].join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='medication_errors_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  showToast('✓ Export CSV เรียบร้อยแล้ว');
+}
+
+// Init
+document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+buildFYOptions();
+
+// Sample data if empty
+if(records.length===0) {
+  const drugs=['Warfarin 5 mg','Digoxin 0.25 mg','Insulin NPH 20U','Metformin 500 mg','Amoxicillin 500 mg','Furosemide 40 mg','Amlodipine 5 mg','Aspirin 81 mg'];
+  const types=['1. Prescribing error','2. Transcribing error','4. Dispensing error','3. Pre-dispensing error','5. Administration error','1. Prescribing error','4. Dispensing error','2. Transcribing error'];
+  const sevs=['A','B','C','B','D','C','E','B'];
+  for(let i=0;i<8;i++){
+    const d=new Date(2025,9+Math.floor(i/2),5+i*3);
+    records.push({id:i,date:d.toISOString().split('T')[0],ward:WARDS[i%WARDS.length],hn:'HN'+String(100000+i*7),gender:i%2===0?'ชาย':'หญิง',drug:drugs[i],type:types[i],severity:sevs[i],detail:'ตัวอย่างข้อมูล'});
+  }
+  save();
+}
+</script>
+</body>
+</html>
