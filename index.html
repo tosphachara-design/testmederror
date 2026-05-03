@@ -334,15 +334,22 @@
         try {
             await fetch(SCRIPT_URL, { 
                 method: 'POST', 
+                // เพิ่ม headers ชุดนี้เข้าไปครับ
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8'
+                },
                 body: JSON.stringify(data) 
             });
+            
             showToast('✅ บันทึกสำเร็จ!');
             resetForm();
-            loadOnlineData();
+            // หน่วงเวลา 1 วินาทีให้ Google Sheets เซฟข้อมูลให้เสร็จก่อนดึงมาแสดงใหม่
+            setTimeout(loadOnlineData, 1000); 
+            
         } catch (e) { 
+            console.error(e);
             showToast('❌ บันทึกล้มเหลว กรุณาลองใหม่'); 
         }
-    }
 
     function resetForm() {
         document.getElementById('f-ward').value = '';
